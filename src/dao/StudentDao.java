@@ -1,6 +1,7 @@
 package dao;
 
 import domain.Student;
+import domain.Teaching;
 import service.DepartmentService;
 import util.JdbcHelper;
 
@@ -19,7 +20,7 @@ public class StudentDao {
         //获取数据库连接对象
         Connection connection = JdbcHelper.getConn();
         Statement stmt = connection.createStatement();
-        ResultSet resultSet = stmt.executeQuery("select * from student");
+        ResultSet resultSet = stmt.executeQuery("select * from student,actor where student.id=actor.id");
         //若结果集仍然有下一条记录，则执行循环体
         while (resultSet.next()){
             students.add(new Student(resultSet.getInt("id"),
@@ -38,7 +39,7 @@ public class StudentDao {
         Student student = null;
         Connection connection = JdbcHelper.getConn();
         //在该连接上创建预编译语句对象
-        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM student WHERE id=?");
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM student,actor WHERE student.id=actor.id and student.id=?");
         //为预编译参数赋值
         preparedStatement.setInt(1,id);
         ResultSet resultSet = preparedStatement.executeQuery();
@@ -55,17 +56,18 @@ public class StudentDao {
         return student;
     }
 
-    public boolean update(Student student) throws SQLException,ClassNotFoundException{
+    public boolean update(Student student) throws SQLException{
         Connection connection = JdbcHelper.getConn();
         //在该连接上创建预编译语句对象
         PreparedStatement preparedStatement = connection.prepareStatement(
-                "UPDATE student SET name=?,IDCard=?,phoneNumber=?,department_id=? WHERE id=?");
+                "UPDATE actor,student SET actor.name =?,actor.IDCard=?,actor.phoneNumber=?,student.department_id=? " +
+                        "WHERE student.id=actor.id and student.id=? ");
         //为预编译参数赋值
         preparedStatement.setString(1,student.getName());
         preparedStatement.setString(2, student.getIDCard());
         preparedStatement.setString(3, student.getPhoneNumber());
         preparedStatement.setInt(4, student.getDepartment().getId());
-        preparedStatement.setInt(5,student.getId());
+        preparedStatement.setInt(5, student.getId());
         //执行预编译语句，获取改变记录行数并赋值给affectedRowNum
         int affectedRowNum = preparedStatement.executeUpdate();
         System.out.println("修改了"+ affectedRowNum + "条学生记录");
@@ -82,20 +84,26 @@ public class StudentDao {
             connection.setAutoCommit(false);
             //添加预编译语句
             preparedStatement = connection.prepareStatement(
-                    "INSERT INTO student (name,StudentNo,IDCard,phoneNumber,Department_id) VALUES (?,?,?,?,?) "
+                    "INSERT INTO actor (name,IDCard,phoneNumber) VALUES (?,?,?) "
                     ,Statement.RETURN_GENERATED_KEYS);
             preparedStatement.setString(1, student.getName());
-            preparedStatement.setString(2, student.getStudentNo());
-            preparedStatement.setString(3, student.getIDCard());
-            preparedStatement.setString(4, student.getPhoneNumber());
-            preparedStatement.setInt(5, student.getDepartment().getId());
+            preparedStatement.setString(2, student.getIDCard());
+            preparedStatement.setString(3, student.getPhoneNumber());
             int affectedRowNum = preparedStatement.executeUpdate();
-            System.out.println("添加了 " + affectedRowNum + " 行学生记录");
+            System.out.println("添加了 " + affectedRowNum + " 行actor记录");
             //通过getGeneratedKeys()获取主键
             ResultSet resultSet = preparedStatement.getGeneratedKeys();
             resultSet.next();
             //获得新增记录的id
             int studentId = resultSet.getInt(1);
+            preparedStatement = connection.prepareStatement(
+                    "INSERT INTO student (id, studentNo, department_id) VALUES (?,?,?) "
+                    ,Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setInt(1,studentId);
+            preparedStatement.setString(2,student.getStudentNo());
+            preparedStatement.setInt(3,student.getDepartment().getId());
+            int affectedRowNum1 = preparedStatement.executeUpdate();
+            System.out.println("添加了 " + affectedRowNum + " 行student记录");
             connection.commit();
             student1 = true;
         } catch (SQLException e) {
@@ -121,46 +129,43 @@ public class StudentDao {
         }
         return student1;
     }
-
-    public void delete(Student student) throws SQLException {
+    public boolean delete(Student student) throws SQLException {
         Connection connection = null;
-        PreparedStatement pstmt = null;
+        PreparedStatement preparedStatement = null;
+        boolean studentifDEL = true;
         try {
-            //在user表中先删studentId为当前student的id的user记录
             connection = JdbcHelper.getConn();
             connection.setAutoCommit(false);
-            String deleteUser_sql = "DELETE FROM user WHERE student_id = ?";
-            pstmt = connection.prepareStatement(deleteUser_sql);
-            pstmt.setInt(1,student.getId());
-            int affectedRowNum = pstmt.executeUpdate();
-            System.out.println("删除了 " + affectedRowNum +" 行记录");
-            //删student记录
-            String deleteStudent_sql = "DELETE FROM student WHERE id = ?";
-            pstmt = connection.prepareStatement(deleteStudent_sql);
-            pstmt.setInt(1,student.getId());
-            int affectedRowNum1 = pstmt.executeUpdate();
-            System.out.println("删除了 " + affectedRowNum1 +" 行记录");
+            preparedStatement = connection.prepareStatement("DELETE FROM student where id=?");
+            preparedStatement.setInt(1,student.getId());
+            int mount = preparedStatement.executeUpdate();
+            System.out.println("本次更新了"+ mount +"行");
+            preparedStatement = connection.prepareStatement("DELETE FROM actor where id = ?");
+            preparedStatement.setInt(1,student.getId());
+            int mount1 = preparedStatement.executeUpdate();
+            System.out.println("本次更新了"+ mount1 +"行");
             connection.commit();
-        } catch (SQLException e) {
+        }catch (SQLException e) {
             System.out.println(e.getMessage() + "\nerrorCode = " + e.getErrorCode());
             try {
-                if (connection != null){
+                if (connection != null) {
                     connection.rollback();
                 }
-            } catch (SQLException e1){
+            } catch (SQLException e1) {
                 e.printStackTrace();
             }
+            studentifDEL =false;
         } finally {
             try {
-                if (connection != null){
+                if (connection != null) {
                     //恢复自动提交
                     connection.setAutoCommit(true);
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-            //关闭资源
-            JdbcHelper.close(pstmt,connection);
+            JdbcHelper.close(preparedStatement, connection);
         }
+        return studentifDEL;
     }
 }
