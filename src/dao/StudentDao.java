@@ -103,7 +103,7 @@ public class StudentDao {
             preparedStatement.setString(2,student.getStudentNo());
             preparedStatement.setInt(3,student.getDepartment().getId());
             int affectedRowNum1 = preparedStatement.executeUpdate();
-            System.out.println("添加了 " + affectedRowNum + " 行student记录");
+            System.out.println("添加了 " + affectedRowNum1 + " 行student记录");
             connection.commit();
             student1 = true;
         } catch (SQLException e) {
@@ -139,11 +139,11 @@ public class StudentDao {
             preparedStatement = connection.prepareStatement("DELETE FROM student where id=?");
             preparedStatement.setInt(1,student.getId());
             int mount = preparedStatement.executeUpdate();
-            System.out.println("本次更新了"+ mount +"行");
+            System.out.println("本次删除了"+ mount +"行");
             preparedStatement = connection.prepareStatement("DELETE FROM actor where id = ?");
             preparedStatement.setInt(1,student.getId());
             int mount1 = preparedStatement.executeUpdate();
-            System.out.println("本次更新了"+ mount1 +"行");
+            System.out.println("本次删除了"+ mount1 +"行");
             connection.commit();
         }catch (SQLException e) {
             System.out.println(e.getMessage() + "\nerrorCode = " + e.getErrorCode());

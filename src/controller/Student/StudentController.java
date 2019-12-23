@@ -103,8 +103,8 @@ public class StudentController extends HttpServlet {
         Student student = null;
         try {
             student = StudentService.getInstance().find(id);
-            boolean ifAdd = StudentService.getInstance().delete(student);
-            if (ifAdd==true){
+            boolean ifDEL = StudentService.getInstance().delete(student);
+            if (ifDEL==true){
                 message.put("message", "增加成功");}
             else {
                 message.put("message","添加失败");

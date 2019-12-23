@@ -3,7 +3,9 @@ package controller.Teacher;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
+import domain.Student;
 import domain.Teacher;
+import service.StudentService;
 import service.TeacherService;
 import util.JSONUtil;
 
@@ -45,42 +47,37 @@ public class TeacherController extends HttpServlet {
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setCharacterEncoding("UTF-8");
         String teacher_json = JSONUtil.getJSON(request);
         Teacher teacher = JSON.parseObject(teacher_json,Teacher.class);
         JSONObject message = new JSONObject();
-        try {
-            TeacherService.getInstance().add(teacher);
-            message.put("message","添加成功");
-            response.getWriter().println(message);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            message.put("message","数据库异常");
-            response.getWriter().println(message);
-        }catch (Exception e) {
-            e.printStackTrace();
-            message.put("message","网络异常");
-            response.getWriter().println(message);
+        boolean ifAdd = TeacherService.getInstance().add(teacher);
+        if (ifAdd==true){
+            message.put("message", "增加成功");}
+        else {
+            message.put("message","添加失败");
         }
-
+        response.getWriter().println(message);
     }
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String id_str = request.getParameter("id");
         int id = Integer.parseInt(id_str);
         JSONObject message = new JSONObject();
         try {
-        Teacher teacher = TeacherService.getInstance().find(id);
-        TeacherService.getInstance().delete(teacher);
-            message.put("message","删除成功");
-            response.getWriter().println(message);
-        }catch (SQLException e) {
+            Teacher teacher = TeacherService.getInstance().find(id);
+            boolean ifDEL = TeacherService.getInstance().delete(teacher);
+            if (ifDEL==true){
+                message.put("message", "增加成功");}
+            else {
+                message.put("message","添加失败");
+            }
+        } catch (SQLException e) {
             e.printStackTrace();
-            message.put("message","数据库异常");
-            response.getWriter().println(message);
-        }catch (Exception e) {
-            e.printStackTrace();
-            message.put("message","网络异常");
-            response.getWriter().println(message);
+            message.put("message","找不到相应id老师");
         }
+
+        //响应message到前端
+        response.getWriter().println(message);
     }
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String teacher_json = JSONUtil.getJSON(request);

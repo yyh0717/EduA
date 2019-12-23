@@ -25,10 +25,10 @@ public class TeacherService {
     public boolean update(Teacher teacher) throws SQLException,ClassNotFoundException{
         return teacherDao.update(teacher);
     }
-    public void add(Teacher teacher) throws SQLException {
-        teacherDao.add(teacher);
+    public boolean add(Teacher teacher){
+        return teacherDao.add(teacher);
     }
-    public void delete(Teacher teacher) throws SQLException {
-        teacherDao.delete(teacher);
+    public boolean delete(Teacher teacher) throws SQLException {
+        return teacherDao.delete(teacher);
     }
 }
