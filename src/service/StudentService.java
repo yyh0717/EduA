@@ -31,7 +31,7 @@ public class StudentService {
         Student student = this.find(id);
         studentDao.delete(student);
     }
-    public void delete(Student student) throws SQLException {
-        studentDao.delete(student);
+    public boolean delete(Student student)   {
+        return studentDao.delete(student);
     }
 }

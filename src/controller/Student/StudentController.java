@@ -28,9 +28,8 @@ public class StudentController extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         //创建JSON对象message，以便往前端响应信息
         JSONObject message = new JSONObject();
-        boolean ifAdd = true;
         //在数据库表中增加Student对象
-        ifAdd = StudentService.getInstance().add(studentToAdd);
+        boolean ifAdd = StudentService.getInstance().add(studentToAdd);
         if (ifAdd==true){
             message.put("message", "增加成功");}
         else {
@@ -101,16 +100,18 @@ public class StudentController extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         //创建JSON对象message，以便往前端响应信息
         JSONObject message = new JSONObject();
-        //到数据库表中删除对应的教师
+        Student student = null;
         try {
-            StudentService.getInstance().delete(id);
-            message.put("message", "删除成功");
+            student = StudentService.getInstance().find(id);
         } catch (SQLException e) {
-            message.put("message", "数据库操作异常");
             e.printStackTrace();
-        } catch (Exception e) {
-            message.put("message", "网络异常");
-            e.printStackTrace();
+            message.put("message","找不到相应id老师");
+        }
+        boolean ifAdd = StudentService.getInstance().delete(student);
+        if (ifAdd==true){
+            message.put("message", "增加成功");}
+        else {
+            message.put("message","添加失败");
         }
         //响应message到前端
         response.getWriter().println(message);

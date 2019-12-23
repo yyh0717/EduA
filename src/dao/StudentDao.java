@@ -129,7 +129,7 @@ public class StudentDao {
         }
         return student1;
     }
-    public boolean delete(Student student) throws SQLException {
+    public boolean delete(Student student){
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         boolean studentifDEL = true;
