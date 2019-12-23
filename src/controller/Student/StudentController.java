@@ -103,16 +103,17 @@ public class StudentController extends HttpServlet {
         Student student = null;
         try {
             student = StudentService.getInstance().find(id);
+            boolean ifAdd = StudentService.getInstance().delete(student);
+            if (ifAdd==true){
+                message.put("message", "增加成功");}
+            else {
+                message.put("message","添加失败");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             message.put("message","找不到相应id老师");
         }
-        boolean ifAdd = StudentService.getInstance().delete(student);
-        if (ifAdd==true){
-            message.put("message", "增加成功");}
-        else {
-            message.put("message","添加失败");
-        }
+
         //响应message到前端
         response.getWriter().println(message);
     }
